@@ -65,9 +65,9 @@ Express Backend
 | `LLM_API_KEY`       | ✅          | API key for your LLM provider                                                                      |
 | `LLM_URL`           | ❌ Optional | LLM endpoint URL (default: `https://api.openai.com/v1/chat/completions`)                           |
 | `LLM_MODEL`         | ❌ Optional | LLM model name (default: `gpt-4o-mini`)                                                            |
-| `TTS_VENDOR`        | ❌ Optional | TTS vendor: `openai`, `elevenlabs`, `cartesia`, or `rime` (default: `rime`)                        |
+| `TTS_VENDOR`        | ✅          | TTS vendor: `openai`, `elevenlabs`, `cartesia`, or `rime`                                          |
 | `TTS_KEY`           | ✅          | API key for your TTS provider                                                                      |
-| `TTS_VOICE_ID`      | ❌ Optional | Voice ID for TTS (default: `astra`)                                                                |
+| `TTS_VOICE_ID`      | ✅          | Voice ID for TTS (e.g. `astra` for Rime, `alloy` for OpenAI)                                       |
 
 > **Note:** `APP_CERTIFICATE` is optional. If your Agora project does not have token authentication enabled, you do not need to set this secret at all.
 
