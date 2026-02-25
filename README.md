@@ -57,17 +57,17 @@ Express Backend
 
 ## Environment Variables
 
-| Variable            | Required | Description                                                       |
-| ------------------- | -------- | ----------------------------------------------------------------- |
-| `APP_ID`            | Yes      | 32-char hex App ID from [Agora Console](https://console.agora.io) |
-| `APP_CERTIFICATE`   | Yes      | App Certificate (enables token auth for RTC + RTM)                |
-| `AGENT_AUTH_HEADER` | Yes      | `Basic <base64(customerKey:customerSecret)>` for the REST API     |
-| `LLM_API_KEY`       | Yes      | OpenAI API key (or compatible provider)                           |
-| `TTS_VENDOR`        | Yes      | `rime`, `openai`, `elevenlabs`, or `cartesia`                     |
-| `TTS_KEY`           | Yes      | API key for your TTS vendor                                       |
-| `TTS_VOICE_ID`      | Yes      | Voice ID (e.g. `astra` for Rime, `alloy` for OpenAI)              |
-| `LLM_URL`           | No       | Custom LLM endpoint (defaults to OpenAI)                          |
-| `LLM_MODEL`         | No       | Model name (defaults to `gpt-4o-mini`)                            |
+| Variable            | Required | Description                                                                          |
+| ------------------- | -------- | ------------------------------------------------------------------------------------ |
+| `APP_ID`            | Yes      | 32-char hex App ID from [Agora Console](https://console.agora.io)                    |
+| `APP_CERTIFICATE`   | No       | App Certificate — enables token auth for RTC + RTM (omit for testing without tokens) |
+| `AGENT_AUTH_HEADER` | Yes      | `Basic <base64(customerKey:customerSecret)>` for the REST API                        |
+| `LLM_API_KEY`       | Yes      | OpenAI API key (or compatible provider)                                              |
+| `TTS_VENDOR`        | Yes      | `rime`, `openai`, `elevenlabs`, or `cartesia`                                        |
+| `TTS_KEY`           | Yes      | API key for your TTS vendor                                                          |
+| `TTS_VOICE_ID`      | Yes      | Voice ID (e.g. `astra` for Rime, `alloy` for OpenAI)                                 |
+| `LLM_URL`           | No       | Custom LLM endpoint (defaults to OpenAI)                                             |
+| `LLM_MODEL`         | No       | Model name (defaults to `gpt-4o-mini`)                                               |
 
 ## Implementation Details
 
@@ -77,7 +77,7 @@ Three routes. Use `dotenv` for env vars. Enable CORS. Serve the Vite build from 
 
 ### Backend: `GET /api/check-env`
 
-Validates all 7 required env vars are set via `process.env`. Returns JSON:
+Validates all 6 required env vars are set via `process.env`. `APP_CERTIFICATE` is optional (reported but not required). Returns JSON:
 
 ```json
 { "configured": { "APP_ID": true, ... }, "ready": true, "missing": [] }
