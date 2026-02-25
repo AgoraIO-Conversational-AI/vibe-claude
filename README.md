@@ -222,12 +222,18 @@ const rtm = new AgoraRTM.default.RTM(appId, String(uid), {
 });
 await rtm.login();
 
-// Send text message to agent
-await rtm.publish(channel, text);
+// Send text message to agent — publish to agent's RTM UID, NOT the channel name
+const payload = JSON.stringify({ message: text, priority: "APPEND" });
+await rtm.publish(agentRtmUid, payload, {
+  customType: "user.transcription",
+  channelType: "USER",
+});
 
 // Disconnect
 await rtm.logout();
 ```
+
+**IMPORTANT:** The publish target is `agentRtmUid` (e.g. `"100-{channel}"`), NOT the channel name. The message must be JSON with `{ message, priority }` format, and the options must include `customType: "user.transcription"` and `channelType: "USER"`.
 
 ### Frontend: UI Layout
 
