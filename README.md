@@ -57,17 +57,19 @@ Express Backend
 
 ## Environment Variables
 
-| Variable            | Required | Description                                                                                                                                                                                |
-| ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `APP_ID`            | Yes      | 32-char hex App ID from [Agora Console](https://console.agora.io)                                                                                                                          |
-| `APP_CERTIFICATE`   | No       | App Certificate — enables token auth for RTC + RTM. **Leave empty or omit entirely for testing without tokens.** When omitted, the app uses `APP_ID` as the token value (required by RTM). |
-| `AGENT_AUTH_HEADER` | Yes      | `Basic <base64(customerKey:customerSecret)>` for the REST API                                                                                                                              |
-| `LLM_API_KEY`       | Yes      | OpenAI API key (or compatible provider)                                                                                                                                                    |
-| `TTS_VENDOR`        | Yes      | `rime`, `openai`, `elevenlabs`, or `cartesia`                                                                                                                                              |
-| `TTS_KEY`           | Yes      | API key for your TTS vendor                                                                                                                                                                |
-| `TTS_VOICE_ID`      | Yes      | Voice ID (e.g. `astra` for Rime, `alloy` for OpenAI)                                                                                                                                       |
-| `LLM_URL`           | No       | Custom LLM endpoint (defaults to OpenAI)                                                                                                                                                   |
-| `LLM_MODEL`         | No       | Model name (defaults to `gpt-4o-mini`)                                                                                                                                                     |
+| Secret              | Required    | Description                                                                                        |
+| ------------------- | ----------- | -------------------------------------------------------------------------------------------------- |
+| `APP_ID`            | ✅          | Agora App ID                                                                                       |
+| `APP_CERTIFICATE`   | ❌ Optional | Agora App Certificate. Leave empty or set to `""` if token auth is disabled on your Agora project. |
+| `AGENT_AUTH_HEADER` | ✅          | Agora REST API auth header (e.g. `Basic <base64>`)                                                 |
+| `LLM_API_KEY`       | ✅          | API key for your LLM provider                                                                      |
+| `LLM_URL`           | ❌ Optional | LLM endpoint URL (default: `https://api.openai.com/v1/chat/completions`)                           |
+| `LLM_MODEL`         | ❌ Optional | LLM model name (default: `gpt-4o-mini`)                                                            |
+| `TTS_VENDOR`        | ❌ Optional | TTS vendor: `openai`, `elevenlabs`, `cartesia`, or `rime` (default: `rime`)                        |
+| `TTS_KEY`           | ✅          | API key for your TTS provider                                                                      |
+| `TTS_VOICE_ID`      | ❌ Optional | Voice ID for TTS (default: `astra`)                                                                |
+
+> **Note:** `APP_CERTIFICATE` is optional. If your Agora project does not have token authentication enabled, you do not need to set this secret at all.
 
 ## Implementation Details
 
