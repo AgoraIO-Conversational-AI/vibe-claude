@@ -1,71 +1,262 @@
 # <img src="https://www.agora.io/en/wp-content/uploads/2024/01/Agora-logo-horizantal.svg" alt="Agora" width="120" style="vertical-align: middle;" /> Vibe Claude — Voice AI Agent
 
-This folder exists for parity with `vibe-lovable` and `vibe-v0`. Unlike those
-projects, there's no generated code here — just prompts. Claude Code doesn't
-need scaffolding; give it one of the prompts below and it builds the whole app.
+A voice AI agent app built entirely by Claude Code. No scaffolding needed — point
+Claude at this README from an empty directory and it builds the whole app.
 
-## Voice Client
+**Prompt:** `Build this Agora Voice AI Agent: https://github.com/AgoraIO-Conversational-AI/vibe-claude`
 
-Paste this into Claude Code from an empty directory:
+## Features
 
-> Build a real-time Voice AI Agent web app using Agora Conversational AI.
-> React + Vite + TypeScript + Tailwind CSS. The app should:
->
-> 1. On load, call a `/api/check-env` endpoint to verify required env vars
->    are set: `APP_ID`, `APP_CERTIFICATE`, `AGENT_AUTH_HEADER`, `LLM_API_KEY`,
->    `TTS_VENDOR`, `TTS_KEY`, `TTS_VOICE_ID`. Show which are missing.
->
-> 2. Show a Connect button. On click, POST to `/api/start-agent` with optional
->    `{ prompt, greeting }`. The backend generates an Agora RTC+RTM token using
->    the `agora-token` npm package (AccessToken with ServiceRtc + ServiceRtm),
->    then calls the Agora ConvoAI REST API
->    (`POST https://api.agora.io/api/conversational-ai-agent/v2/projects/{appId}/join`)
->    to start the agent. Return `{ appId, channel, token, uid, agentUid, agentId }`.
->
-> 3. On the client, dynamically import `agora-rtc-sdk-ng` (browser-only).
->    Join the RTC channel, create a microphone audio track with AEC/ANS/AGC,
->    publish it. Subscribe to the agent's audio and play it. Listen for the
->    `stream-message` event to receive transcript JSON from the agent
->    (`{ object, text, turn_id, final/turn_status }`). Display transcripts
->    as chat bubbles, grouping by `turn_id`.
->
-> 4. Dynamically import `agora-rtm`. Login, then expose a `sendTextMessage()`
->    that publishes to the channel so the user can type messages to the agent.
->
-> 5. Show an animated orb that pulses when the agent is speaking (detect via
->    remote audio volume polling). Show a waveform visualizer for the local mic.
->    Mute/unmute button. End button that leaves RTC, logs out RTM, and POSTs
->    to `/api/hangup-agent` with the `agentId`.
->
-> 6. Use Express (or Next.js API routes, or Supabase Edge Functions) for the
->    backend. The ConvoAI agent payload should include: `enable_rtm: true`,
->    `transcript.enable: true`, `protocol_version: "v2"`, ASR vendor `ares`,
->    and configurable TTS (rime/openai/elevenlabs/cartesia).
+- **Real-time Voice** — Full-duplex audio via Agora RTC with echo cancellation,
+  noise suppression, and auto gain control
+- **Live Transcripts** — User and agent speech appears in the chat window as it
+  happens (via RTC stream-message)
+- **Text Chat** — Type a message and send it to the agent via Agora RTM
+- **Agent Visualizer** — Animated orb shows agent state (idle, joining, listening, speaking, disconnected)
+- **Customizable** — Settings for custom system prompt and greeting before connecting
+- **Self-contained** — Express backend handles token generation, agent start, and hangup
 
-## Video Avatar Client
+## Quick Start
 
-> Same as above, but add a video avatar. After the agent joins, also subscribe
-> to the agent's video track and render it in a `<video>` element next to or
-> behind the orb. The backend payload should include `enable_video: true` and
-> a `video` config section with the avatar provider settings. The user still
-> only sends audio (no camera needed).
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure environment
+
+```bash
+cp .env.example .env
+```
+
+Fill in your keys in `.env`.
+
+### 3. Run the app
+
+```bash
+npm run dev
+```
+
+Open the app, click **Connect**, and start talking.
+
+## Architecture
+
+```
+Browser (React + Vite)
+  │
+  ├─ RTC audio ←→ Agora Conversational AI Agent
+  ├─ RTC stream-message ← agent transcripts
+  └─ RTM publish → text messages to agent
+
+Express Backend
+  ├─ GET  /api/check-env    — validates required env vars
+  ├─ POST /api/start-agent  — generates RTC+RTM tokens, calls Agora ConvoAI API
+  └─ POST /api/hangup-agent — stops the agent
+```
 
 ## Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `APP_ID` | Agora App ID |
-| `APP_CERTIFICATE` | Agora App Certificate |
-| `AGENT_AUTH_HEADER` | `Basic <base64(customerKey:customerSecret)>` |
-| `LLM_API_KEY` | OpenAI API key (or compatible) |
-| `TTS_VENDOR` | `rime`, `openai`, `elevenlabs`, or `cartesia` |
-| `TTS_KEY` | TTS provider API key |
-| `TTS_VOICE_ID` | Voice ID (e.g. `astra`, `alloy`) |
+| Variable            | Required | Description                                                       |
+| ------------------- | -------- | ----------------------------------------------------------------- |
+| `APP_ID`            | Yes      | 32-char hex App ID from [Agora Console](https://console.agora.io) |
+| `APP_CERTIFICATE`   | Yes      | App Certificate (enables token auth for RTC + RTM)                |
+| `AGENT_AUTH_HEADER` | Yes      | `Basic <base64(customerKey:customerSecret)>` for the REST API     |
+| `LLM_API_KEY`       | Yes      | OpenAI API key (or compatible provider)                           |
+| `TTS_VENDOR`        | Yes      | `rime`, `openai`, `elevenlabs`, or `cartesia`                     |
+| `TTS_KEY`           | Yes      | API key for your TTS vendor                                       |
+| `TTS_VOICE_ID`      | Yes      | Voice ID (e.g. `astra` for Rime, `alloy` for OpenAI)              |
+| `LLM_URL`           | No       | Custom LLM endpoint (defaults to OpenAI)                          |
+| `LLM_MODEL`         | No       | Model name (defaults to `gpt-4o-mini`)                            |
+
+## Implementation Details
+
+### Backend: Express Server
+
+Three routes. Use `dotenv` for env vars. Enable CORS. Serve the Vite build from `dist/` in production.
+
+### Backend: `GET /api/check-env`
+
+Validates all 7 required env vars are set via `process.env`. Returns JSON:
+
+```json
+{ "configured": { "APP_ID": true, ... }, "ready": true, "missing": [] }
+```
+
+### Backend: `POST /api/start-agent`
+
+Accepts optional POST body `{ prompt, greeting }`. Defaults: prompt = "You are a friendly voice assistant. Keep responses concise, around 10 to 20 words." greeting = "Hi there! How can I help you today?"
+
+**Token generation** — combined RTC+RTM token using `agora-token`:
+
+```typescript
+import { AccessToken, ServiceRtc, ServiceRtm } from "agora-token";
+
+function buildToken(
+  channelName: string,
+  uid: string,
+  appId: string,
+  appCertificate: string,
+): string {
+  const token = new AccessToken(appId, appCertificate, 86400);
+  const rtcService = new ServiceRtc(channelName, uid);
+  rtcService.addPrivilege(ServiceRtc.kPrivilegeJoinChannel, 86400);
+  rtcService.addPrivilege(ServiceRtc.kPrivilegePublishAudioStream, 86400);
+  token.addService(rtcService);
+  const rtmService = new ServiceRtm(uid);
+  rtmService.addPrivilege(ServiceRtm.kPrivilegeLogin, 86400);
+  token.addService(rtmService);
+  return token.build();
+}
+```
+
+UIDs are strings: agent = `"100"`, user = `"101"`. Channel is random 10-char alphanumeric. Agent RTM UID = `"100-{channel}"`.
+
+**Agent payload** — POST to `https://api.agora.io/api/conversational-ai-agent/v2/projects/{appId}/join`:
+
+```json
+{
+  "name": "{channel}",
+  "properties": {
+    "channel": "{channel}",
+    "token": "{agentToken}",
+    "agent_rtc_uid": "100",
+    "agent_rtm_uid": "100-{channel}",
+    "remote_rtc_uids": ["*"],
+    "enable_string_uid": false,
+    "idle_timeout": 120,
+    "advanced_features": {
+      "enable_bhvs": true,
+      "enable_rtm": true,
+      "enable_aivad": true,
+      "enable_sal": false
+    },
+    "llm": {
+      "url": "{LLM_URL or https://api.openai.com/v1/chat/completions}",
+      "api_key": "{LLM_API_KEY}",
+      "system_messages": [{ "role": "system", "content": "{prompt}" }],
+      "greeting_message": "{greeting}",
+      "failure_message": "Sorry, something went wrong",
+      "max_history": 32,
+      "params": { "model": "{LLM_MODEL or gpt-4o-mini}" },
+      "style": "openai"
+    },
+    "vad": { "silence_duration_ms": 300 },
+    "asr": { "vendor": "ares", "language": "en-US" },
+    "tts": "{ttsConfig}",
+    "parameters": {
+      "transcript": {
+        "enable": true,
+        "protocol_version": "v2",
+        "enable_words": false
+      }
+    }
+  }
+}
+```
+
+**TTS config builder** — supports multiple vendors:
+
+- **rime** (default): `{ vendor: "rime", params: { api_key, speaker: voiceId, modelId: "mistv2", lang: "eng", samplingRate: 16000, speedAlpha: 1.0 } }`
+- **openai**: `{ vendor: "openai", params: { api_key, model: "tts-1", voice: voiceId, response_format: "pcm", speed: 1.0 } }`
+- **elevenlabs**: `{ vendor: "elevenlabs", params: { key, model_id: "eleven_flash_v2_5", voice_id: voiceId, stability: 0.5, sample_rate: 24000 } }`
+- **cartesia**: `{ vendor: "cartesia", params: { api_key, model_id: "sonic-3", sample_rate: 24000, voice: { mode: "id", id: voiceId } } }`
+
+Returns: `{ appId, channel, token, uid, agentUid, agentRtmUid, agentId, success }`
+
+### Backend: `POST /api/hangup-agent`
+
+POST with `{ agentId }`. Calls `POST https://api.agora.io/api/conversational-ai-agent/v2/projects/{appId}/agents/{agentId}/leave` with `AGENT_AUTH_HEADER`.
+
+### Frontend: React + Vite + TypeScript + Tailwind CSS
+
+Install `agora-rtc-sdk-ng` and `agora-rtm` from npm. Both are browser-only SDKs — dynamically import them inside async functions at connect time, never at the top of the file.
+
+### Frontend: RTC Voice
+
+```typescript
+const AgoraRTC = (await import("agora-rtc-sdk-ng")).default;
+const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+client.on("user-published", async (user, mediaType) => {
+  if (mediaType !== "audio") return;
+  await client.subscribe(user, "audio");
+  user.audioTrack?.play();
+  // Poll user.audioTrack.getVolumeLevel() to detect agent speaking
+});
+await client.join(appId, channel, token, uid);
+const micTrack = await AgoraRTC.createMicrophoneAudioTrack({
+  encoderConfig: "high_quality_stereo",
+  AEC: true,
+  ANS: true,
+  AGC: true,
+});
+await client.publish(micTrack);
+```
+
+### Frontend: Transcript Listener
+
+The agent sends transcripts via RTC data stream:
+
+```typescript
+client.on("stream-message", (_uid: number, data: Uint8Array) => {
+  const text = new TextDecoder().decode(data);
+  const msg = JSON.parse(text);
+  // msg.object = "user.transcription" or "assistant.transcription"
+  // msg.text = transcript text
+  // msg.turn_id = groups messages into turns
+  // For user: msg.final = true means end of utterance
+  // For assistant: msg.turn_status === 1 means end of turn
+});
+```
+
+Display transcripts as chat bubbles grouped by `turn_id`. Update in-place for partial transcripts, mark final when complete. No hardcoded greeting — the agent sends its greeting via the transcript stream.
+
+### Frontend: RTM Text Messaging
+
+```typescript
+const AgoraRTM = await import("agora-rtm");
+const rtm = new AgoraRTM.default.RTM(appId, String(uid), {
+  token: token ?? undefined,
+});
+await rtm.login();
+
+// Send text message to agent
+await rtm.publish(channel, text);
+
+// Disconnect
+await rtm.logout();
+```
+
+### Frontend: UI Layout
+
+**Pre-connection:** Centered orb, Connect button, collapsible settings panel for custom system prompt and greeting.
+
+**Connected:** Split layout — left panel has animated pulsing orb (scales/glows when agent speaks), mute/unmute button, audio waveform bars (via Web Audio API AnalyserNode); right panel has scrolling chat messages with user/assistant bubbles, text input with send button. Header shows channel name, elapsed timer, and End button. Mobile collapses to single column.
+
+**Agent orb states:** idle (dim, scaled down), joining (spinning border), listening (gentle pulse), talking (ping rings + glow + scale up), disconnected (dim).
+
+### Frontend: Audio Visualization
+
+Create an `AudioContext` and `AnalyserNode` from the microphone track's `MediaStreamTrack`. Poll `getByteFrequencyData()` via `requestAnimationFrame` and render as vertical bars.
+
+## Video Avatar Client
+
+Same as above, but also subscribe to the agent's video track and render it in a `<video>` element. The backend payload should additionally include video avatar configuration for the provider. The user still only sends audio (no camera needed).
+
+## Tech Stack
+
+- **Frontend:** React, Vite, TypeScript, Tailwind CSS
+- **Backend:** Express
+- **RTC SDK:** agora-rtc-sdk-ng v4.24+
+- **RTM SDK:** agora-rtm v2.2+
+- **Token gen:** agora-token (server-side)
 
 ## Reference
 
+- [simple-backend](https://github.com/AgoraIO-Conversational-AI/agent-samples/tree/main/simple-backend) — Python reference implementation of the same token generation, start-agent, and hangup-agent logic
 - [Agora Conversational AI Docs](https://docs.agora.io/en/conversational-ai/overview/product-overview)
-- [Agent Samples](https://github.com/AgoraIO-Conversational-AI/agent-samples) — production-grade reference implementations
+- [Agora Console](https://console.agora.io)
+- [Agent Samples](https://github.com/AgoraIO-Conversational-AI/agent-samples)
 - [vibe-lovable](https://github.com/AgoraIO-Conversational-AI/vibe-lovable) — Lovable-generated version
 - [vibe-v0](https://github.com/AgoraIO-Conversational-AI/vibe-v0) — v0-generated version
 
