@@ -87,7 +87,7 @@ Validates all 6 required env vars are set via `process.env`. `APP_CERTIFICATE` i
 
 Accepts optional POST body `{ prompt, greeting }`. Defaults: prompt = "You are a friendly voice assistant. Keep responses concise, around 10 to 20 words." greeting = "Hi there! How can I help you today?"
 
-**Token generation** — combined RTC+RTM token using `agora-token`:
+**Token generation** — combined RTC+RTM token using `agora-token`. When `APP_CERTIFICATE` is set, generates real tokens. Otherwise, falls back to using `APP_ID` as the token value for both the agent payload and the user response (required for RTM to work without certificate auth).
 
 ```typescript
 import { AccessToken, ServiceRtc, ServiceRtm } from "agora-token";
@@ -109,6 +109,8 @@ function buildToken(
   return token.build();
 }
 ```
+
+**Token fallback** — when `APP_CERTIFICATE` is not set, use `APP_ID` as the token value everywhere (agent payload `token` field AND the `token` returned to the frontend). Do NOT return `null` or empty string — RTM login requires a non-empty token value.
 
 UIDs are strings: agent = `"100"`, user = `"101"`. Channel is random 10-char alphanumeric. Agent RTM UID = `"100-{channel}"`.
 
