@@ -281,7 +281,7 @@ await rtm.logout();
 - Publish target is `agentRtmUid` (e.g. `"100-{channel}"`), NOT the channel name
 - Message must be JSON: `{ "message": "text", "priority": "APPEND" }`
 - Options must include `customType: "user.transcription"` and `channelType: "USER"`
-- Show the user's message optimistically in the chat UI before sending
+- Do NOT add the message to the chat UI locally — the agent echoes it back as a `user.transcription` via the RTC stream-message transcript listener, so it appears automatically
 - Never `console.log()` the RTM client object — it causes `RangeError: Invalid string length` from circular references
 
 ### Frontend: UI Layout
