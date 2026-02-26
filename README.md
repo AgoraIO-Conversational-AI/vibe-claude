@@ -62,13 +62,13 @@ Express Backend
 - `APP_ID` — Your Agora project App ID
 - `AGENT_AUTH_HEADER` — Auth header for Agora Conversational AI API (e.g. `Basic <base64(customerKey:customerSecret)>`)
 - `LLM_API_KEY` — API key for your LLM provider (e.g. OpenAI)
+- `TTS_VENDOR` — TTS provider. Options: `rime`, `openai`, `elevenlabs`, `cartesia`
 - `TTS_KEY` — API key for your TTS provider
+- `TTS_VOICE_ID` — Voice ID for your TTS provider (e.g. `astra` for Rime, `alloy` for OpenAI)
 
 **Optional (have defaults):**
 
 - `APP_CERTIFICATE` — Agora App Certificate. **Default: empty (no token auth).** Leave unset or set to `""` if your Agora project does not use token authentication.
-- `TTS_VENDOR` — Default: `rime`. Options: `rime`, `openai`, `elevenlabs`, `cartesia`
-- `TTS_VOICE_ID` — Default: `astra`. Examples: `astra` (Rime), `alloy` (OpenAI)
 - `LLM_URL` — Default: `https://api.openai.com/v1/chat/completions`
 - `LLM_MODEL` — Default: `gpt-4o-mini`
 
