@@ -308,15 +308,6 @@ Same as above, but also subscribe to the agent's video track and render it in a 
 - **RTM SDK:** agora-rtm v2.2+
 - **Token gen:** agora-token (server-side)
 
-## Reference
-
-- [simple-backend](https://github.com/AgoraIO-Conversational-AI/agent-samples/tree/main/simple-backend) — Python reference implementation of the same token generation, start-agent, and hangup-agent logic
-- [Agora Conversational AI Docs](https://docs.agora.io/en/conversational-ai/overview/product-overview)
-- [Agora Console](https://console.agora.io)
-- [Agent Samples](https://github.com/AgoraIO-Conversational-AI/agent-samples)
-- [vibe-lovable](https://github.com/AgoraIO-Conversational-AI/vibe-lovable) — Lovable-generated version
-- [vibe-v0](https://github.com/AgoraIO-Conversational-AI/vibe-v0) — v0-generated version
-
 ## License
 
 MIT
